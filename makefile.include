@@ -1,0 +1,16 @@
+# makefile tools library  for bulding multi-directory projects
+#
+# Luke Humphreys 2012
+ 
+# This project requires the C++11 standard
+USE_CPP11=YES
+ALL_WARNINGS=YES
+TOOL_CHAIN=INTEL
+
+ifndef PROJECT_ROOT_DIR
+    PROJECT_ROOT_DIR=$(HOME)/DynamicDispatch/
+endif
+
+DEV_TOOLS_DIR=$(PROJECT_ROOT_DIR)/DEV_TOOLS/
+
+include $(DEV_TOOLS_DIR)/Make/makefile.include
