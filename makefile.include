@@ -5,7 +5,7 @@
 # This project requires the C++11 standard
 USE_CPP11=YES
 ALL_WARNINGS=YES
-TOOL_CHAIN=INTEL
+TOOL_CHAIN=GNU
 
 ifndef PROJECT_ROOT_DIR
     PROJECT_ROOT_DIR=$(HOME)/DynamicDispatch/

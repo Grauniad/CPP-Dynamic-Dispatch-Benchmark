@@ -8,6 +8,7 @@
 #include <cmath>
 #include <memory>
 #include "dataWriter_BinaryWriter.h"
+#include <iomanip>
 
 using namespace std;
 const long BILLION = 1e9; 
@@ -30,10 +31,35 @@ unique_ptr<DATA_STORE> store(new DATA_STORE);
 
 int main(int argc, const char *argv[]) {
     Test("Running benchmark...",  (loggedTest)BENCHMARK).RunTest();
-    Test("Initialising store using direct access...",  (loggedTest)DIRECT).RunTest();
-    Test("Initialising store using static_cast...",  (loggedTest)STATIC).RunTest();
-    Test("Initialising store using vtable...",  (loggedTest)VTABLE).RunTest();
-    Test("Initialising store using dynamic_cast...",  (loggedTest)DYNAMIC).RunTest();
+    Test directTest("Initialising store using direct access...",  (loggedTest)DIRECT);
+    Test staticCastTest("Initialising store using static_cast...",  (loggedTest)STATIC);
+    Test vtableTest("Initialising store using vtable...",  (loggedTest)VTABLE);
+    Test dynamicCastTest("Initialising store using dynamic_cast...",  (loggedTest)DYNAMIC);
+    directTest.RunTest();
+    staticCastTest.RunTest();
+    vtableTest.RunTest();
+    dynamicCastTest.RunTest();
+
+    cout << setprecision(2) << endl;
+
+    cout << "Total number of function calls for each test: " << double(NUM_RECORDS)/1e9 << " billion" << endl;
+    cout << endl;
+
+    double staticCost = staticCastTest.RunTime() - directTest.RunTime();
+    cout << "Additional cost to static Cast: " << staticCost;
+    cout << "s (" << 1e9 * (staticCost/ NUM_RECORDS) << " ns/call)" << endl;
+    cout << endl;
+
+    double vtableCost = vtableTest.RunTime() - directTest.RunTime();
+    cout << "Additional cost to vtable loopup: " << vtableCost;
+    cout << "s (" << 1e9 * (vtableCost/ NUM_RECORDS) << " ns/call)" << endl;
+    cout << endl;
+
+    double dynamicCost = dynamicCastTest.RunTime() - directTest.RunTime();
+    cout << "Additional cost to dynamic_cast: " << dynamicCost;
+    cout << "s (" << 1e9 * (dynamicCost/ NUM_RECORDS) << " ns/call)" << endl;
+    cout << endl;
+
     return 0;
 }
 
