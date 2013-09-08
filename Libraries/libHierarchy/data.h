@@ -48,11 +48,7 @@ public:
     }
 
     inline void WriteItem_VTable(long idx) {
-        if ( idx == 0 ) {
-            writers[0]->Write(*(dest+idx));
-        } else {
-            writers[idx%(N+1)]->Write(*(dest+idx));
-        }
+        writers[idx%(N+1)]->Write(*(dest+idx));
     }
 
     template<char I>

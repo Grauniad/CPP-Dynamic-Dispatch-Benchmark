@@ -1,3 +1,3 @@
-MAKE_DIRS= libDevirtualiser libHierarchy
+MAKE_DIRS= libHierarchy
 
 include ../makefile.include
