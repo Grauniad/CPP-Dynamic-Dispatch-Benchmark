@@ -15,7 +15,7 @@ Results
     <th> GNU </th> <th> INTEL </th>
 </tr>
 <tr>
-     <td> static_casts </td>      
+     <td> static_cast </td>      
      <td> 0.17 ns</td> <td> 0.32 ns</td>
 </tr>
 <tr>
