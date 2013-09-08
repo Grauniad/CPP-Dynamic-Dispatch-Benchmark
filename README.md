@@ -1,7 +1,7 @@
 CPP-Dynamic-Dispatch-Speed
 ==========================
 
-Simple test of vtable / dynamic_cast lookup times in C++
+Naive test of **dynamic dispatch** and **dynamic_cast** times in C++
 
 Results
 =======
@@ -14,29 +14,46 @@ Results
        <th> Test </th> <th> "Debug" cost of call </th> <th> "Release" cost of call </th> <th> "Fast" cost of call </th>
    </tr>
    <tr>
-       <td> VTable (GNU)   </td> <td> 0 </td> <td> 2.9ns </td> <td> 3.5ns </td>
+       <td> Dynamic Dispatch (GNU)   </td> <td> 0 </td> <td> 2.9ns </td> <td> 3.5ns </td>
 
    </tr>
    <tr>
-       <td> VTable (INTEL) </td> <td> 0 </td> <td> 2.6ns </td> <td> 3.4ns </td>
+       <td> Dynamic Dispatch (INTEL) </td> <td> 0 </td> <td> 2.7ns </td> <td> 3.4ns </td>
    </tr>
     <tr>
        <td> dynamic_cast (GNU)   </td>  <td> 6.7ns </td>  <td> 8.2ns </td> <td> 9.5ns </td>
 
    </tr>
    <tr>
-       <td> dynamic_cast (INTEL) </td> <td>6.6ns </td> <td> 0.25ns </td> <td> 2ns </td>
+       <td> dynamic_cast (INTEL) </td> <td>6.6ns </td> <td> 0.23ns </td> <td> 2ns </td>
    </tr>
 </table>
+
+Results indicate the extra time required to dynamically cast a reference to a base interface class (FileLikeWriter) to the implementation (DataLump)
+
+```
+DataLump<size>& obj  = object;
+FileLikeWriter& file = object;
+....
+// Direct Call - avoding dynamic dispatch by specifying implementation class
+obj.DataLump<SIZE>::Write(...);
+
+// dynamic dispatch
+file.Write(...);
+
+// dynamic_cast - avoiding dynamic dispatch by specifying implementation class
+dynamic_cast<DataLump<SIZE>&>(file).DataLump<SIZE>::Write(...);
+....
+```
 
 Method
 ======
 
 We want to know the cost of the run-time operation to resolve the correct function call. 
-This is always going to be tiny, sot the called funtion must do a *TINY* amount of work in order for this to be significant.
+This is always going to be tiny, so the called funtion must do a *tiny* amount of work in order for this to be significant.
 (In this case the function does a memcpy of sizeof(long) ).
 
-It is also important to note that we are not interested (in this case) of the overall performance of the compiler, we just want the cost of dynamic dispatch.
+It is also important to note that we are not interested (in this case) in the overall performance of the compiler, we just want the cost of dynamic dispatch.
 
 
 ```
@@ -79,13 +96,30 @@ The error involved on a single call is clearly ludicrous, so it is repeated 0.65
 <tr>
     <td> g++ "Fast" flags </td> <td> -Ofast -march=native </td>
 </tr>
-
 </table>
+(Additionally all compilations are done with -Wall -Werror)
 
 
 Raw Results
 -----------
 
+<table>
+<tr>
+    <th> Test </th> <th> g++ (release) </th> <th> icc (release) </th> 
+</tr>
+<tr>
+    <td> Direct Function Call </td> <td> 0.57 seconds </td> <td> 1.35 seconds </td>
+</tr>
+<tr>
+    <td> static_cast </td> <td> 0.58 seconds </td> <td> 1.35 seconds </td>
+</tr>
+<tr>
+    <td> dynamic_cast </td> <td> 5.88 seconds </td> <td> 1.5 seconds </td> 
+</tr>
+<tr>
+    <td> Dynamic Dispatch </td> <td> 2.45 seconds </td> <td> 3.11 seconds </td> 
+</tr>
+</table>
 
 
 Usage
@@ -94,18 +128,24 @@ Usage
 Clone the repositry, (recursive is required to clone the submodules)
 
 ```
-git clone --recursive git@github.com:Grauniad/CPP-Dynamic-Dispatch-Speed.git
+git clone --recursive https://github.com/Grauniad/CPP-Dynamic-Dispatch-Speed.git
 ```
 
 Running make will trigger all build tests (including the final benchmark test)
 
 Debug build:
 ```
-make 
+make -j <cores>
 ```
 
 Optimized build:
 
 ```
-make release
+make -j <cores> release
+```
+
+Fast build:
+
+```
+make -j <cores> fast
 ```
