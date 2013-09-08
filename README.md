@@ -1,7 +1,5 @@
-CPP-Dynamic-Dispatch-Speed
-==========================
-
-Naive test of **dynamic dispatch** and **dynamic_cast** times in C++
+Dynamic Dispatch in C++
+=======================================
 
 Results
 =======
@@ -29,7 +27,7 @@ Results
    </tr>
 </table>
 
-Results indicate the extra time required to dynamically cast a reference to a base interface class (FileLikeWriter) to the implementation (DataLump)
+Results indicate the extra time required to dynamically call a function in an implementation class (DataLump), from an interface (FileLikeWriter)
 
 ```
 DataLump<size>& obj  = object;
