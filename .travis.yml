@@ -1,1 +1,1 @@
-script: PROJECT_ROOT_DIR=$PWD make
+script: ./buildMe.sh

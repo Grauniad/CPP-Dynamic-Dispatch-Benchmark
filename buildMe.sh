@@ -1,0 +1,3 @@
+#!/bin/sh
+
+PROJECT_ROOT_DIR=$PWD ONLY_MODES=CPP make $*
