@@ -1,4 +1,4 @@
-Dynamic Dispatch in C++ ![Build Status](https://travis-ci.org/Grauniad/CPP-Dynamic-Dispatch-Benchmark.png "build status")
+Dynamic Dispatch in C++ [![Build Status](https://travis-ci.org/Grauniad/CPP-Dynamic-Dispatch-Benchmark.png)](https://travis-ci.org/Grauniad/CPP-Dynamic-Dispatch-Benchmark)
 =======================================
 
 Results
