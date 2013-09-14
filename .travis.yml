@@ -1,1 +1,1 @@
-script: ./buildMe.sh
+script: ./.travisBuildMe.sh
