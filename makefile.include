@@ -8,7 +8,7 @@ ALL_WARNINGS=YES
 TOOL_CHAIN=GNU
 
 ifndef PROJECT_ROOT_DIR
-    PROJECT_ROOT_DIR=$(HOME)/Grauniad/CPP-Dynamic-Dispatch-Benchmark
+    PROJECT_ROOT_DIR=$(HOME)/Grauniad/CPP-Dynamic-Dispatch-Benchmark/
 endif
 
 DEV_TOOLS_DIR=$(PROJECT_ROOT_DIR)/DEV_TOOLS/
