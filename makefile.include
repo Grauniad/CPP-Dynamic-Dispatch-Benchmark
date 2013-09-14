@@ -5,7 +5,10 @@
 # This project requires the C++11 standard
 USE_CPP11=YES
 ALL_WARNINGS=YES
-TOOL_CHAIN=GNU
+
+ifndef TOOL_CHAIN
+    TOOL_CHAIN=GNU
+endif
 
 ifndef PROJECT_ROOT_DIR
     PROJECT_ROOT_DIR=$(HOME)/Grauniad/CPP-Dynamic-Dispatch-Benchmark/
