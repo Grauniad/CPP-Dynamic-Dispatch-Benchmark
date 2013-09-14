@@ -31,7 +31,7 @@ void TestLoop<0>(DATA_FILE& results) {
 int main(int argc, const char *argv[]) {
     DATA_FILE dataFile;
 
-    TestLoop<30>(dataFile);
+    TestLoop<10>(dataFile);
     OFStreamWriter dest("GNU.csv");
     dataFile.WriteCSV(dest);
     return 0;
