@@ -2,88 +2,55 @@
 #define DATA_H
 
 #include <vector>
+#include <iostream>
 
 using namespace std;
 
 class Writer {
 public:
-    virtual void Write(char &dest) = 0;
+    virtual long Depth() = 0;
     virtual ~Writer() {}
 };
 
-template<char N> 
+template<long N> 
 class WriterInstance: public WriterInstance<N-1> {
 public:
-    WriterInstance(): data(N) {}
+    WriterInstance() : n(N) {}
 
-    virtual void Write(char &dest) {
-        dest = data;
+    virtual long Depth() {
+        return n;
     }
     virtual ~WriterInstance() {}
 private:
-    char data;
+    long n;
 };
 
 template<>
 class WriterInstance<0>: public Writer {
 public:
-    WriterInstance(): data(0) {}
+    WriterInstance(): n(0) {}
 
-    virtual void Write(char &dest) {
-        dest = data;
+    virtual long Depth() {
+        return n;
     }
     virtual ~WriterInstance() {}
 private:
-    char data;
+    long n;
 };
 
-template<long items, char N>
-class Data {
+class DummyArray {
 public:
-    Data();
-    const long ITEMS = items;
-    const char WRITERS = N;
-    char Get(long i) { 
-        return dest[i];
-    }
+    DummyArray(long items=1e6);
 
-    inline void WriteItem_VTable(long idx) {
-        writers[idx%(N+1)]->Write(*(dest+idx));
-    }
+    void WriteItem_Direct(long idx, WriterInstance<0>& w);
 
-    template<char I>
-    inline void WriteItem_StaticCast(long idx) {
-        using INSTANCE = WriterInstance<I>;
-        static_cast<INSTANCE*>(writers[idx%(N+1)])->INSTANCE::Write(
-            *(dest+idx)
-        );
-    }
+    void WriteItem_VTable(long idx, Writer& w);
 
-    template<char I>
-    inline void WriteItem_DynamicCast(long idx) {
-        using INSTANCE = WriterInstance<I>;
-        dynamic_cast<INSTANCE*>(writers[idx%(N+1)])->INSTANCE::Write(
-            *(dest+idx)
-        );
-    }
+    void WriteItem_DynamicCast(long idx, Writer& w);
 
-    inline void WriteItem_Direct(long idx) {
-        w.WriterInstance<0>::Write(*(dest+idx));
-    }
-
-    ~Data() {
-        delete [] dest;
-        for ( Writer* w: writers) {
-            delete w;
-       }
-    }
+    virtual ~DummyArray() { }
 private:
-    char * dest;
-    vector<Writer *> writers;
-    WriterInstance<0> w;
+    vector<long>     data;
 };
-
-
-#include "data.hpp"
 
 #endif

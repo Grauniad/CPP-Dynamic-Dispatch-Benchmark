@@ -1,136 +1,124 @@
 #include "tester.h"
 #include "data.h"
+#include "csv.h"
 #include <iostream>
 #include <iomanip>
+#include <type_traits>
+#include "stdWriter.h"
 
 using namespace std;
 
-int DIRECT(testLogger& log);
-int STATIC(testLogger& log);
-int DYNAMIC(testLogger& log);
-int VTABLE(testLogger& log);
+const long NUM_ITEMS = 65000000;
 
-#define NUM_WRITERS 127
-#define NUM_ITEMS 650000000
-using DATA_TYPE = Data<NUM_ITEMS,NUM_WRITERS>;
+// DEPTH, DIRECT_TIME, VTABLE_TIME, DYNAMIC_TIME, VTABLE_COST, DYNAMIC_COST
+using DATA_FILE = CSV<int, double, double, double, double, double>;
+
+template<long DEPTH>
+void DoTests(DATA_FILE& results);
+
+// Loop over DoTests
+template<long I>
+void TestLoop(DATA_FILE& results) {
+    DoTests<I>(results);
+    TestLoop<I-1>(results);
+}
+template<>
+void TestLoop<0>(DATA_FILE& results) {
+    DoTests<0>(results);
+}
+
 
 int main(int argc, const char *argv[]) {
-    Test directTest("Initialising store using direct access...",  (loggedTest)DIRECT);
-    Test staticCastTest("Initialising store using static_cast...",  (loggedTest)STATIC);
-    Test vtableTest("Initialising store using vtable...",  (loggedTest)VTABLE);
-    Test dynamicCastTest("Initialising store using dynamic_cast...",  (loggedTest)DYNAMIC);
-    directTest.RunTest();
-    staticCastTest.RunTest();
-    vtableTest.RunTest();
-    dynamicCastTest.RunTest();
+    DATA_FILE dataFile;
+
+    TestLoop<30>(dataFile);
+    OFStreamWriter dest("GNU.csv");
+    dataFile.WriteCSV(dest);
+    return 0;
+}
+
+int DIRECT(long ITEMS) {
+    DATA_FILE  data;
+    WriterInstance<0> w;
+    DummyArray arr(ITEMS);
+
+    for (long idx=0; idx<ITEMS; ++idx) {
+        arr.WriteItem_Direct(idx,w);
+    }
+    return 0;
+}
+
+template<long DEPTH>
+int VTABLE(long ITEMS) {
+    WriterInstance<DEPTH> w;
+    DummyArray arr(ITEMS);
+
+    for (long idx=0; idx<ITEMS; ++idx) {
+        arr.WriteItem_VTable(idx,w);
+    }
+    return 0;
+}
+
+template<long DEPTH>
+int DYNAMIC(long ITEMS) {
+    WriterInstance<DEPTH> w;
+    DummyArray arr(ITEMS);
+
+    for (long idx=0; idx<ITEMS; ++idx) {
+        arr.WriteItem_DynamicCast(idx,w);
+    }
+    return 0;
+}
+
+
+template <long DEPTH>
+void DoTests(DATA_FILE& results) {
+    clock_t direct_start = clock();
+
+    DIRECT(NUM_ITEMS);
+    clock_t direct_stop = clock();
+
+    clock_t vtable_start = clock();
+    VTABLE<DEPTH>(NUM_ITEMS);
+    clock_t vtable_stop = clock();
+
+    // scale resolution to the amount of work dynamic_cast is going to take AGES to fo
+    long DITEMS = NUM_ITEMS / (10*DEPTH+1); 
+    clock_t dynamic_start = clock();
+    DYNAMIC<DEPTH>(DITEMS);
+    clock_t dynamic_stop = clock();
 
     cout << setprecision(2) << endl;
 
-    cout << "Total number of function calls for each test: " << double(NUM_ITEMS)/1e9 << " billion" << endl;
-    cout << endl;
+    cout << "**********************************************************************" << endl;
+    cout << "** Hierarchy Depth: " << DEPTH << endl;
+    cout << "**********************************************************************" << endl;
+    double direct_time = double(direct_stop - direct_start) / CLOCKS_PER_SEC;
+    double vtable_time = double(vtable_stop - vtable_start) / CLOCKS_PER_SEC;
+    double dynamic_time = double(dynamic_stop - dynamic_start) / CLOCKS_PER_SEC;
+    cout << "Direct took: " <<  direct_time << " seconds " << endl;
+    cout << "vtable took: " <<  vtable_time << " seconds " << endl;
+    cout << "dynamic_cast: " <<  dynamic_time << " seconds " << endl;
 
-    double staticCost = staticCastTest.RunTime() - directTest.RunTime();
-    cout << "Additional cost to static Cast: " << staticCost;
-    cout << "s (" << 1e9 * (staticCost/ NUM_ITEMS) << " ns/call)" << endl;
-    cout << endl;
-
-    double vtableCost = vtableTest.RunTime() - directTest.RunTime();
+    double vtableCost = vtable_time- direct_time;
+    double vtableCostPerCall = 1e9 * (vtableCost/ NUM_ITEMS);
     cout << "Additional cost to vtable loopup: " << vtableCost;
-    cout << "s (" << 1e9 * (vtableCost/ NUM_ITEMS) << " ns/call)" << endl;
+    cout << "s (" <<  vtableCostPerCall << " ns/call)" << endl;
     cout << endl;
 
-    double dynamicCost = dynamicCastTest.RunTime() - directTest.RunTime();
+    double dynamicCost = dynamic_time- direct_time * (double(DITEMS)/double(NUM_ITEMS));
+    double dynamicCostPerCall = 1e9 * (dynamicCost/ DITEMS);
     cout << "Additional cost to dynamic_cast: " << dynamicCost;
-    cout << "s (" << 1e9 * (dynamicCost/ NUM_ITEMS) << " ns/call)" << endl;
+    cout << "s (" <<  dynamicCostPerCall << " ns/call)" << endl;
     cout << endl;
-}
+    cout << "**********************************************************************" << endl;
 
-int Validate(DATA_TYPE& d, testLogger& log) {
-    for ( long l =0; l<d.ITEMS; l++ ) {
-        if ( d.Get(l) != l % (d.WRITERS+1) ) {
-            log << "Missmatch at index " << l << endl;
-            log << "Expected: " << int( l % (NUM_WRITERS+1)) << endl;
-            log << "Got: " << int(d.Get(l)) << endl;
-            return 1;
-        }
-    }
-    return 0;
+    results.AddRow (
+        DEPTH,
+        direct_time + 0,
+        vtable_time + 0,
+        dynamic_time  +0,
+        vtableCostPerCall +0,
+        dynamicCostPerCall +0
+    );
 }
-
-template<char N>
-void DoDirect(DATA_TYPE& d) {
-    for ( long idx =N; idx< NUM_ITEMS; idx+=(NUM_WRITERS+1)) {
-        d.WriteItem_Direct(idx);
-    }
-    DoDirect<N-1>(d);
-}
-template <>
-void DoDirect<0>(DATA_TYPE&d) {
-    for ( long idx=0; idx<NUM_ITEMS; idx+=(NUM_WRITERS+1)) {
-        d.WriteItem_Direct(idx);
-    }
-}
-int DIRECT(testLogger& log ) {
-    DATA_TYPE store;
-    DoDirect<NUM_WRITERS>(store);
-    return 0;
-}
-
-template<char N>
-void DoStatic(DATA_TYPE& d) {
-    for ( long idx =N; idx< NUM_ITEMS; idx+=(NUM_WRITERS+1)) {
-        d.WriteItem_StaticCast<N>(idx);
-    }
-    DoStatic<N-1>(d);
-}
-template <>
-void DoStatic<0>(DATA_TYPE&d) {
-    for ( long idx=0; idx<NUM_ITEMS; idx+=(NUM_WRITERS+1)) {
-        d.WriteItem_StaticCast<0>(idx);
-    }
-}
-int STATIC(testLogger& log ) {
-    DATA_TYPE store;
-    DoStatic<NUM_WRITERS>(store);
-    return 0;
-}
-
-template<char N>
-void DoDynamic(DATA_TYPE& d) {
-    for ( long idx =N; idx< NUM_ITEMS; idx+=(NUM_WRITERS+1)) {
-        d.WriteItem_DynamicCast<N>(idx);
-    }
-    DoDynamic<N-1>(d);
-}
-template <>
-void DoDynamic<0>(DATA_TYPE&d) {
-    for ( long idx=0; idx<NUM_ITEMS; idx+=(NUM_WRITERS+1)) {
-        d.WriteItem_DynamicCast<0>(idx);
-    }
-}
-int DYNAMIC(testLogger& log ) {
-    DATA_TYPE store;
-    DoDynamic<NUM_WRITERS>(store);
-    return 0;
-}
-
-template<char N>
-void DoVTable(DATA_TYPE& d) {
-    for ( long idx =N; idx< NUM_ITEMS; idx+=(NUM_WRITERS+1)) {
-        d.WriteItem_VTable(idx);
-    }
-    DoVTable<N-1>(d);
-}
-template <>
-void DoVTable<0>(DATA_TYPE&d) {
-    for ( long idx=0; idx<NUM_ITEMS; idx+=(NUM_WRITERS+1)) {
-        d.WriteItem_VTable(idx);
-    }
-}
-int VTABLE(testLogger& log ) {
-    DATA_TYPE store;
-    DoVTable<NUM_WRITERS>(store);
-    return 0;
-}
-
-
