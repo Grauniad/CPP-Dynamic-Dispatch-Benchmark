@@ -1,1 +1,1 @@
-script: ./.travisBuildMe.sh
+script: ./DEV_TOOLS/Scripts/TRAVIS.sh
