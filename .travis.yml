@@ -7,4 +7,4 @@ before_install:
   - sudo apt-get install exuberant-ctags
   - sudo apt-get install libboost-dev
 
-script: ./DEV_TOOLS/Scripts/TRAVIS.sh
+script: TOOL_CHAIN=TRAVIS make 

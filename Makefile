@@ -2,7 +2,14 @@ MAKE_DIRS= DEV_TOOLS \
            Libraries \
            Tests
 
-# Uncomment to build a tags file for everything, but it will only update when
-# make is run in the root directory
+# makefile tools library  for bulding multi-directory projects
 #
+# Luke Humphreys 2012
+ALL_WARNINGS=YES
+
+dummy: makefile.include all
+
+makefile.include: 
+	$(MAKE) -C DEV_TOOLS/Config/Makefiles/
+
 include makefile.include
